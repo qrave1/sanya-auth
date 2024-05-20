@@ -161,12 +161,27 @@ func ValidateTokenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+// Logger - middleware, который логирует входящие запросы
+func Logger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		log.Printf(
+			"%s\t%s\t%s",
+			r.Method,
+			r.RequestURI,
+
+			time.Since(start),
+		)
+	})
+}
+
 func main() {
 	cfg := config.NewConfig()
 
 	secret = []byte(cfg.Server.Secret)
 
-	log.SetOutput(os.Stderr)
+	log.SetOutput(os.Stdout)
 
 	repos, err := repository.NewGormRepository(cfg)
 	if err != nil {
@@ -175,9 +190,9 @@ func main() {
 
 	repo = repos
 
-	http.HandleFunc("/register", RegisterHandler)
-	http.HandleFunc("/login", LoginHandler)
-	http.HandleFunc("/validate", ValidateTokenHandler)
+	http.Handle("/register", Logger(http.HandlerFunc(RegisterHandler)))
+	http.Handle("/login", Logger(http.HandlerFunc(LoginHandler)))
+	http.Handle("/validate", Logger(http.HandlerFunc(ValidateTokenHandler)))
 
 	log.Println("Server is starting...")
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%s", cfg.Server.Port), nil))
