@@ -180,5 +180,5 @@ func main() {
 	http.HandleFunc("/validate", ValidateTokenHandler)
 
 	log.Println("Server is starting...")
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", cfg.Server.Port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%s", cfg.Server.Port), nil))
 }
